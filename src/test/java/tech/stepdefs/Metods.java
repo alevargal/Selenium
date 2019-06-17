@@ -24,6 +24,7 @@ public class Metods {
     @Before
     public void setUp() {
 
+        //start
         System.setProperty("webdriver.chrome.driver", "/Users/user/Cucumber/drivers/chromedriver75");
         driver = new ChromeDriver();
         wait = new WebDriverWait(driver, 10);
