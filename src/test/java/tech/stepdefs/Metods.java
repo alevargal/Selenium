@@ -4,204 +4,127 @@ import cucumber.api.DataTable;
 import cucumber.api.java.After;
 import cucumber.api.java.Before;
 import cucumber.api.java.ru.Тогда;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Wait;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import tech.pages.*;
 
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.security.Key;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static junit.framework.TestCase.assertTrue;
+import static org.aspectj.bridge.MessageUtil.fail;
 
 public class Metods {
 
     @Before
     public void setUp() {
 
-        //start
+
         System.setProperty("webdriver.chrome.driver", "/Users/user/Cucumber/drivers/chromedriver75");
         driver = new ChromeDriver();
         wait = new WebDriverWait(driver, 10);
         waitWithMessage = new WebDriverWait(driver, 50).withMessage("Элемент не найден");
         driver.manage().window().maximize();
         driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-        driver.get("https://www.google.com/");
+
+        jse = (JavascriptExecutor)driver;
+        date = new Date();
+        dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        cap = ((RemoteWebDriver) driver).getCapabilities();
+
+        // соединяем все атрибуты для имени файла
+        file_name = dateFormat.format(date) + " " + cap.getBrowserName().toLowerCase() + " " + "google.txt";
+        // компилятор ругается на / я решил заменить на подчеркивание
+        file_name = file_name.replaceAll("\\/","_");
 
     }
 
-    @Тогда("^Welcome: Mercury Tours$")
-    public void Welcome_Mercury_Tours(DataTable arg) {
 
-        MainForm mainForm = new MainForm();
+    @Тогда("^фильтрация записей из файла$")
+    public void фильтрация_записей_из_файла() throws IOException {
 
-        loadPage("http://newtours.demoaut.com/");
-        checkingTitlePage("Welcome: Mercury Tours");
-        WebElement login = checkingItemName(mainForm.login);
-        WebElement password = checkingItemName(mainForm.password);
+        FilterMas filter = new FilterMas();
+        filter.filter_file();
+
+    }
+
+    @Тогда("^фильтр по яндекс$")
+    public void фильтр_по_яндекс(DataTable arg) throws InterruptedException {
+        loadPage("https://yandex.ru");
+
+        Yandex ya = new Yandex();
 
         List<Map<String, String>> table = arg.asMaps(String.class, String.class);
-        login.sendKeys(table.get(0).get("логин"));
-        password.sendKeys(table.get(0).get("пароль"));
 
-        checkingItemXpath(mainForm.goon).click();
+        checkingItemXpath(ya.shop).click();
+        checkingItemXpath(ya.search).sendKeys(table.get(0).get("Наименование"));
+        checkingItemXpath(ya.search).sendKeys(Keys.ENTER);
+        checkingItemXpath(ya.price).sendKeys(table.get(0).get("Стоимость от"));
 
-    }
+        Thread.sleep(4000);
 
-    @Тогда("^Find a Flight: Mercury Tours:$")
-    public void Find_a_Flight_Mercury_Tours() {
+        List<WebElement> e = driver.findElements(By.xpath(ya.all));
+        String[] ms = e.get(0).getText().split(" ");
+        String r = ms[0]+" "+ms[1]+" "+ms[2]+" "+ms[3];
 
-        SecondForm secondForm = new SecondForm();
+        checkingItemXpath(ya.ourphone).click();
+        checkingText(r, ya.h);
 
-        checkingTitlePage("Find a Flight: Mercury Tours:");
-        checkingItemXpath(secondForm.type).click();
+        loadPage("https://market.yandex.ru/");
 
-        selectionFromTheList(secondForm.passengers, 1);
-        selectionFromTheList(secondForm.departingfrom, 4);
-        selectionFromTheList(secondForm.onMonth, 10);
-        selectionFromTheList(secondForm.onDay, 19);
-        selectionFromTheList(secondForm.arrivingIn, 7);
-        selectionFromTheList(secondForm.returningMonth, 11);
-        selectionFromTheList(secondForm.returningDay, 18);
+        checkingItemXpath(ya.search).sendKeys(table.get(1).get("Наименование"));
+        checkingItemXpath(ya.search).sendKeys(Keys.ENTER);
+        checkingItemXpath(ya.price).sendKeys(table.get(1).get("Стоимость от"));
+        checkingItemXpath(ya.pricemax).sendKeys(table.get(1).get("Стоимость до"));
 
-        checkingItemXpath(secondForm.serviceclass).click();
-        selectionFromTheList(secondForm.airline, 3);
+        Thread.sleep(4000);
 
-        checkingItemXpath(secondForm.futher).click();
+        List<WebElement> w = driver.findElements(By.xpath(ya.all));
+        String[] ms2 = w.get(0).getText().split(" ");
+        String rs = ms2[1]+" "+ms2[2]+" "+ms2[3];
 
-    }
-
-    @Тогда("^Select a Flight: Mercury Tours$")
-    public void Select_a_Flight_Mercury_Tours() {
-
-        ThirdForm thirdForm = new ThirdForm();
-
-        checkingTitlePage("Select a Flight: Mercury Tours");
-
-        checkingText(checkingItemXpath(thirdForm.depart).getText(), "Paris to Seattle");
-        depart = checkingItemXpath(thirdForm.depart).getText();
-        checkingText(checkingItemXpath(thirdForm.departData).getText(), "11/20/2019");
-        departData = checkingItemXpath(thirdForm.departData).getText();
-        checkingItemXpath(thirdForm.selectUnifiedAirlines).click();
-        selectUnifiedAirlinesName = checkingItemXpath(thirdForm.selectUnifiedAirlinesName).getText();
-        departPrice = checkingItemXpath(thirdForm.departPrice).getText();
-
-        checkingText(checkingItemXpath(thirdForm.retur).getText(), "Seattle to Paris");
-        retur = checkingItemXpath(thirdForm.retur).getText();
-        checkingText(checkingItemXpath(thirdForm.returnData).getText(), "12/19/2019");
-        returnData = checkingItemXpath(thirdForm.returnData).getText();
-        checkingItemXpath(thirdForm.selectBlueSkiesAirlines).click();
-        selectBlueSkiesAirlinesName = checkingItemXpath(thirdForm.selectBlueSkiesAirlinesName).getText();
-        returnPrice = checkingItemXpath(thirdForm.returnPrice).getText();
-
-        checkingItemXpath(thirdForm.further).click();
+        checkingItemXpath(ya.ourheadphone).click();
+        checkingText(rs, ya.h);
 
     }
 
-    @Тогда("^Book a Flight: Mercury Tours$")
-    public void Book_a_Flight_Mercury_Tours() {
+    @Тогда("^job_alfabank$")
+    public void job_alfabank(DataTable arg) throws Exception {
 
-        FourthForm fourthForm = new FourthForm();
+        loadPage("https://google.com");
 
-        checkingTitlePage("Book a Flight: Mercury Tours");
+        Google google = new Google();
 
-        checkingText(checkingItemXpath(fourthForm.summaryDepart).getText(), depart);
-        checkingText(checkingItemXpath(fourthForm.summaryDepartData).getText(), departData);
-        checkingText(checkingItemXpath(fourthForm.summaryDepartFlyght).getText(), selectUnifiedAirlinesName);
-        checkingText(checkingItemXpath(fourthForm.summaryDepartClass).getText(), airClass);
-        List<WebElement> listDepart = driver.findElements(By.xpath(fourthForm.summaryDepartPrice));
-        checkingText(departPrice, listDepart.get(1).getText());
+        List<Map<String, String>> table = arg.asMaps(String.class, String.class);
+        checkingItemName(google.search_bar).sendKeys(table.get(0).get("Банк"));
+        checkingItemName(google.search_bar).sendKeys(Keys.ENTER);
 
-        checkingText(checkingItemXpath(fourthForm.summaryReturn).getText(), retur);
-        checkingText(checkingItemXpath(fourthForm.summaryReturnData).getText(), returnData);
-        checkingText(checkingItemXpath(fourthForm.summaryReturnFlyght).getText(), selectBlueSkiesAirlinesName);
-        checkingText(checkingItemXpath(fourthForm.summaryReturnClass).getText(), airClass);
-        List<WebElement> listReturn = driver.findElements(By.xpath(fourthForm.summaryReturnPrice));
-        checkingText(returnPrice, listReturn.get(1).getText());
+        // из результатов поиска переходим по первому значению
+        selectionFromTheList(google.search_values, 0);
 
-        checkingText(checkingItemXpath(fourthForm.totalPrice).getText(), totalPrice);
+        // прокручиваем страницу в самый низ
+        jse.executeScript("window.scrollTo(0, document.body.scrollHeight)");
+        // ищем раздел Вакансии
+        driver.findElement(By.linkText(table.get(0).get("Значения"))).click();
+        // ищем раздел О нас
+        driver.findElement(By.linkText(table.get(1).get("Значения"))).click();
 
-        // Passengers
-        // first
-        checkingItemXpath(fourthForm.firstNameFirstPassengers).sendKeys("Ivan");
-        checkingItemXpath(fourthForm.lastNameFirstPassengers).sendKeys("Ivanov");
-        selectionFromTheList(fourthForm.maelFirstPassengers, 3);
-        // second
-        checkingItemXpath(fourthForm.firstNameSecondPassengers).sendKeys("Irina");
-        checkingItemXpath(fourthForm.lastNameSecondPassengers).sendKeys("Ivanova");
-        selectionFromTheList(fourthForm.maelSecondPassengers, 1);
-        // credit card
-        selectionFromTheList(fourthForm.creditCardType, 2);
-        checkingItemXpath(fourthForm.creditCardNumber).sendKeys("5479540454132487");
-        selectionFromTheList(fourthForm.creditCardMonth, 5);
-        selectionFromTheList(fourthForm.creditCardYear, 9);
-        checkingItemXpath(fourthForm.creditCardFirstName).sendKeys("Ivan");
-        checkingItemXpath(fourthForm.creditCardMiddle).sendKeys("Ivanovich");
-        checkingItemXpath(fourthForm.creditCardLast).sendKeys("Ivanov");
-        // billing address
-        checkingItemXpath(fourthForm.billingAddressAddress).sendKeys("1085 Borregas Ave.");
-        checkingItemXpath(fourthForm.billingAddressCity).sendKeys("Albuquerque");
-        checkingItemXpath(fourthForm.billingAddressState).sendKeys("New Mexico");
-        checkingItemXpath(fourthForm.billingAddressCode).sendKeys("94089");
-        selectionFromTheList(fourthForm.billingAddressContry, 214);
-        // delivery address
-        checkingItemXpath(fourthForm.deliveryAddressSameAsBillingAddress).click();
-        checkingItemXpath(fourthForm.deliveryAddressAddress).sendKeys("1225 Borregas Ave.»");
-        checkingItemXpath(fourthForm.deliveryAddressCity).sendKeys("Boston");
-        checkingItemXpath(fourthForm.deliveryAddressState).sendKeys("Massachusetts");
-        checkingItemXpath(fourthForm.deliveryAddressCode).sendKeys("91089");
-        selectionFromTheList(fourthForm.deliveryAddressContry, 214);
-
-        checkingItemXpath(fourthForm.further).click();
-
-    }
-
-    @Тогда("^Flight Confirmation: Mercury Tours$")
-    public void Flight_Confirmation_Mercury_Tours(){
-
-        FifthForm fifthForm = new FifthForm();
-
-        checkingTitlePage("Flight Confirmation: Mercury Tours");
-
-        // departing
-        checkingText(checkingItemXpath(fifthForm.departingInfo).getText(), depart);
-        checkingText(checkingItemXpath(fifthForm.departingInfo).getText(), departData);
-        checkingText(checkingItemXpath(fifthForm.departingInfo).getText(), departPrice.replaceAll("[^0-9]", ""));
-        // returning
-        checkingText(checkingItemXpath(fifthForm.returnInfo).getText(), retur);
-        checkingText(checkingItemXpath(fifthForm.returnInfo).getText(), returnData);
-        checkingText(checkingItemXpath(fifthForm.returnInfo).getText(), returnPrice.replaceAll("[^0-9]",""));
-        // passengers
-        checkingText(checkingItemXpath(fifthForm.passengers).getText(), "2");
-        // billed to
-        checkingText(checkingItemXpath(fifthForm.biledTo).getText(), "Ivan Ivanovich Ivanov");
-        checkingText(checkingItemXpath(fifthForm.biledTo).getText(), "1325 Borregas Ave.1085 Borregas Ave.");
-        checkingText(checkingItemXpath(fifthForm.biledTo).getText(), "SunnyvaleAlbuquerque, CANew Mexico, 9408994089");
-        // delivery address
-        checkingText(checkingItemXpath(fifthForm.deliveryAddress).getText(), "1325 Borregas Ave.1225 Borregas Ave.");
-        checkingText(checkingItemXpath(fifthForm.deliveryAddress).getText(), "SunnyvaleBoston, CAMassachusetts, 9408991089");
-        // checking total
-        String totalPrice = checkingItemXpath(fifthForm.totalPrice).getText().replaceAll("[^0-9]","");
-        String totalTaxi = checkingItemXpath(fifthForm.totalTaxi).getText().replaceAll("[^0-9]","");
-        int total = Integer.parseInt(totalPrice); int taxi = Integer.parseInt(totalTaxi);
-        String departingPrice = checkingItemXpath(fifthForm.departingInfo).getText().substring(checkingItemXpath(fifthForm.departingInfo).getText().lastIndexOf("$"));
-        String depart = departingPrice.replaceAll("[^0-9]",""); int departing = Integer.parseInt(depart);
-        String returnPrice = checkingItemXpath(fifthForm.returnInfo).getText().substring(checkingItemXpath(fifthForm.returnInfo).getText().lastIndexOf("$"));
-        String retur = returnPrice.replaceAll("[^0-9]",""); int returning = Integer.parseInt(retur);
-        int check = (departing * 2 + returning * 2) + taxi;
-        if (check == total) {
-            try {
-            } catch (NullPointerException e) {
-                System.out.println("Итоговая сумма не верна");
-            }
-        }
-
-        checkingItemXpath(fifthForm.goHome).click();
+        // создаем файл
+        file = new FileWriter(file_name);
+        // записываем информацию в фаил
+        file.write(checkingItemXpath(google.date).getText());
+        // закрываем поток
+        file.close();
 
     }
 
@@ -209,36 +132,47 @@ public class Metods {
     public void closeBrowser(){
 
         driver.quit();
-
     }
 
+
+    // драйвер для работы с библиотеками Selenium
     WebDriver driver;
+    // явные ожидание
     WebDriverWait wait;
     Wait<WebDriver> waitWithMessage;
-    String depart, departData, departPrice, selectUnifiedAirlinesName;
-    String retur, returnData, returnPrice, selectBlueSkiesAirlinesName;
-    String airClass= "Business";
-    String totalPrice = "1199";
 
 
+    // интерфейс Selenium который будет работать с driver
+    JavascriptExecutor jse;
+    // используем FileWriter для записи в файл
+    FileWriter file;
+    // используем Date для записи времени
+    Date date;
+    // для взятия информации о браузере
+    Capabilities cap;
+    // для работы с датой
+    DateFormat dateFormat;
+    String file_name;
 
+    //загружаем страницу
     public void loadPage(String url){ driver.get(url); }
+    // сверяем наименования
+    public void checkingText(String textsecond, String text){ assertTrue("Наименование обьектов неверно", driver.findElement(By.xpath(text)).getText().contains(textsecond)); }
 
-    public void checkingTitlePage(String title){ assertTrue("Наименование страницы указано неверно", driver.getTitle().contains(title)); }
-
-    public void checkingText(String textOne, String textTwo){ assertTrue("Наименование обьектов неверно", textOne.contains(textTwo)); }
-
+    // работаем со списком элементов Xpath
     public void selectionFromTheList(String list, int index){
         List<WebElement> weblist = driver.findElements(By.xpath(list));
         weblist.get(index).click();
     }
 
+    // проверяем элемент Name
     public WebElement checkingItemName(String way){
         WebElement name = (new WebDriverWait(driver, 10)
                 .until(ExpectedConditions.presenceOfElementLocated(By.name(way))));
         return name;
     }
 
+    // проверяем элемент Xpath
     public WebElement checkingItemXpath(String way){
         WebElement xpath = (new WebDriverWait(driver, 10)
                 .until(ExpectedConditions.presenceOfElementLocated(By.xpath(way))));

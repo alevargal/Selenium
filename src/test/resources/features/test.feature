@@ -4,10 +4,17 @@
 
   @success
   Сценарий: Успешный поиск информации
-    Тогда Welcome: Mercury Tours
-     | логин      | пароль   |
-     | tutorial   | tutorial |
-    Тогда Find a Flight: Mercury Tours:
-    Тогда Select a Flight: Mercury Tours
-    Тогда Book a Flight: Mercury Tours
-    Тогда Flight Confirmation: Mercury Tours
+    #Задание №1
+    Тогда фильтрация записей из файла
+
+    #Задание №2
+    Тогда фильтр по яндекс
+     |Наименование      |Стоимость от|Стоимость до|
+     |Смартфоны Samsung |40000       |            |
+     |Наушники beats    |17000       |25000       |
+
+    #Задание №3
+    Тогда job_alfabank
+     |Банк      |Значения|
+     |Альфа банк|Вакансии|
+     |          |О нас   |
